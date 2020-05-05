@@ -1,5 +1,10 @@
-### Documentation
+### Example
 
+        zkList 		:= []string{"127.0.0.1:2181"}
+        zkPath 		:= "services"
+        serviceName	:= "otrade-go"
+        servicePort	:= 8897
+        serviceType	:= "DYNAMIC"
         conn,err:=gozk.Connect(zkList)
         if err ==nil {
             gozk.Register(conn, zkPath, serviceName, servicePort, serviceType)
@@ -8,3 +13,14 @@
             log.Printf("zk connect error")
         }
         
+### Register Server
+
+    gozk.Register(conn, zkPath, serviceName, servicePort, serviceType)
+    
+### Discover Server
+
+    gozk.Discover(conn, zkPath)
+    
+### Get Server random IP Port 
+
+    gozk.GetServerInfo(serviceName)
