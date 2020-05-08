@@ -82,11 +82,14 @@ func Discover(conn *zk.Conn,zkpath string)  {
 
 func Serverlist()(map[string][]ServiceInfo)  {
 
+	discoverService.RLock()
+	defer discoverService.RUnlock()
 	return discoverService.ServerList
 }
 
 func GetServerInfo(serviceName string)(ServiceInfo){
-
+	discoverService.RLock()
+	defer discoverService.RUnlock()
 	if _,ok:=discoverService.ServerList[serviceName];ok{
 
 		serviceCount :=len(discoverService.ServerList[serviceName])
