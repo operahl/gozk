@@ -51,7 +51,7 @@ func (s *RegisterService)RegisterZK(conn *zk.Conn,zkNode string,serviceName stri
 		fmt.Println(err)
 		return
 	}
-	u1 := uuid.Must(uuid.NewV4())
+	u1 := uuid.Must(uuid.NewV4(),err)
 
 	var serviceInfo	ServiceInfo
 

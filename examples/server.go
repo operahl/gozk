@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"gozk/gozk"
+	"gozk"
 	"log"
 	"net/http"
 )
