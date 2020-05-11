@@ -1,4 +1,4 @@
-module gozk
+module github.com/operahl/gozk
 
 go 1.12
 
