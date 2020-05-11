@@ -1,4 +1,4 @@
-module gozk/gozk
+module gozk
 
 go 1.12
 
