@@ -2,6 +2,7 @@ package gozk
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/satori/go.uuid"
@@ -64,7 +65,10 @@ func (s *RegisterService)RegisterZK(conn *zk.Conn,zkNode string,serviceName stri
 	serviceInfo.Id=u1.String()
 	serviceInfo.Name=serviceName
 	serviceInfo.Port = servicePort
-	serviceInfo.Address=s.getLocalServerIp()
+	ip,err:=s.GetIntranetIp()
+	if err==nil{
+		serviceInfo.Address=ip.IP.String()
+	}
 	serviceInfo.ServiceType = ServiceType
 
 	s.root =  fmt.Sprintf("/%s/%s/%s",zkNode,serviceName,u1.String())
@@ -102,26 +106,18 @@ func (s *RegisterService)ensureRoot() error {
 	}
 	return nil
 }
-func (s *RegisterService)getLocalServerIp() string {
-	netInterfaces, err := net.Interfaces()
-	if err != nil {
-		fmt.Println("net.Interfaces failed, err:", err.Error())
-	}
-	ip :=""
-	for i := 0; i < len(netInterfaces); i++ {
-		if (netInterfaces[i].Flags & net.FlagUp) != 0 {
-			addrs, _ := netInterfaces[i].Addrs()
 
-			for _, address := range addrs {
-				if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-					if ipnet.IP.To4() != nil {
-						ip = ipnet.IP.String()
-					}
-				}
+func (s *RegisterService)GetIntranetIp() (*net.IPNet, error) {
+	if addresses, err := net.InterfaceAddrs(); err != nil {
+		return nil, err
+	} else {
+		for _, ip := range addresses {
+			if ipnet, ok := ip.(*net.IPNet); ok && !ipnet.IP.IsLoopback() && ipnet.IP.To4() != nil {
+				return ipnet, nil
 			}
 		}
+		return nil, errors.New("no ipv4 address")
 	}
-	return ip
 }
 
 func (s *RegisterService)mirror(path string) (chan []string, chan error) {
