@@ -19,7 +19,6 @@ func main() {
 	if err ==nil {
 		//register center
 		gozk.Register(conn, zkPath, serviceName, servicePort, serviceType)
-
 		//sevices discover
 		gozk.Discover(conn, zkPath)
 	}else {

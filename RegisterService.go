@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/satori/go.uuid"
+	"log"
 	"net"
 	"time"
 )
@@ -41,15 +42,20 @@ func (s *RegisterService)checkError(err error) {
 func (s *RegisterService)RegisterZK(conn *zk.Conn,zkNode string,serviceName string,servicePort int,ServiceType string) {
 	var err error
 	s.conn = conn
-	//defer s.conn.Close()
 
-	if err != nil {
-		fmt.Printf(" connect zk error: %s ", err)
+	exist, _, _, err := conn.ExistsW("/"+zkNode)
+	if !exist {
+		if _, err := conn.Create("/"+zkNode, []byte("init"), 0, zk.WorldACL(zk.PermAll)); err != nil {
+			fmt.Println("Create returned error: %v", err)
+		}
+
 	}
-	_, _, ech, err := s.conn.ExistsW("/"+zkNode)
-	if err != nil {
-		fmt.Println(err)
-		return
+	serviceNode := "/"+zkNode+"/"+serviceName
+	exist, _, _, err = conn.ExistsW(serviceNode)
+	if !exist {
+		if _, err := conn.Create(serviceNode, []byte("init"), 0, zk.WorldACL(zk.PermAll)); err != nil {
+			fmt.Println("Create returned error: %v", err)
+		}
 	}
 	u1 := uuid.Must(uuid.NewV4(),err)
 
@@ -67,23 +73,15 @@ func (s *RegisterService)RegisterZK(conn *zk.Conn,zkNode string,serviceName stri
 	if err != nil {
 		fmt.Printf(" regist node error: %s ", err)
 	}
-	callback(ech)
 }
 
-func (s *RegisterService)handleCient(conn net.Conn,port string) {
-	defer s.conn.Close()
-
-	daytime := time.Now().String()
-	conn.Write([]byte(port + ": " + daytime))
-
-}
 
 func (s *RegisterService)RegistServer( str string) (err error) {
 	if err := s.conn.Delete(s.root, -1); err != nil {
 		//fmt.Println("Delete returned error: %+v", err)
 	}
 	if _, err := s.conn.Create(s.root, []byte(str), zk.FlagEphemeral, zk.WorldACL(zk.PermAll)); err != nil {
-		fmt.Println("Create returned error: %+v", err)
+		log.Printf("Create returned error: %v", err)
 	}
 
 	return err
@@ -164,11 +162,3 @@ func (s *RegisterService)Watch(node string){
 	}()
 }
 
-func callback(ech <-chan zk.Event) {
-	event:=<-ech
-	fmt.Println("*******************")
-	fmt.Println("path:", event.Path)
-	fmt.Println("type:", event.Type.String())
-	fmt.Println("state:", event.State.String())
-	fmt.Println("-------------------")
-}
